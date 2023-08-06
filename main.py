@@ -7,7 +7,9 @@ def menuIncial():
     print(" ║            Practica 1 - Lenguajes Formales y de Programación           ║")
     print(" ╠════════════════════════════════════════════════════════════════════════╣")
     print(" ║                                                                        ║")
-    print(" ║                         Sistema de Inventario                          ║")
+    print(
+        " ║                        \033[34mSistema de Inventario\033[0m                           ║"
+    )
     print(" ║                     1. Cargar Inventario Inicial                       ║")
     print(" ║                     2. Cargar Instrucciones de movimientos             ║")
     print(" ║                     3. Crear Informe de Inventario                     ║")
@@ -25,23 +27,46 @@ def menuOpciones(opcion, inventario):
             "Seleccione el archivo de inicio", "Archivo de inicio", "*.inv"
         )
         if validacion:
+            alertas("Archivo cargado", "verde")
             leer_inicio(inventario, url_temporal)
         else:
-            print("Selecciones un archivo")
+            alertas("Seleccione el archivo de inicio", "rojo")
+
     elif opcion == "2":
+        if len(inventario.productos) == 0:
+            alertas("Primero agregue el archivo .inv", "rojo")
+            return
         url_temporal, validacion = pedir_archivos(
             "Seleccione el archivo de movimientos", "Archivo de movimientos", "*.mov"
         )
         if validacion:
+            alertas("Archivo cargado", "verde")
             leer_movimientos(inventario, url_temporal)
+            alertas("Datos Actualizados", "verde")
         else:
-            print("Selecciones un archivo")
+            alertas("Selecciones un archivo", "rojo")
     elif opcion == "3":
+        if len(inventario.productos) == 0:
+            alertas("Primero agregue el archivo .inv", "rojo")
+            return
         inventario.crear_informe()
+        alertas("Informe creado", "verde")
     elif opcion == "4":
-        print("Gracias por utilizar el sistema")
+        alertas("Cierre de Sesión", "verde")
     else:
-        print("Opción no valida")
+        alertas("Opción no valida", "rojo")
+
+
+def alertas(texto, color):
+    colores = {
+        "fondo_rojo": "\033[41m",
+        "texto_rojo": "\033[31m",
+        "fondo_verde": "\033[42m",
+        "texto_verde": "\033[32m",
+    }
+    tipo = "✖ Error" if color == "rojo" else "✔ Operación exitosa"
+    print(f"\n{colores['fondo_'+color]} {tipo} \033[0m", end="")
+    print(f"{colores['texto_'+color]} {texto} \033[0m\n")
 
 
 class Producto:
@@ -64,52 +89,49 @@ class ControlInventario:
 
     def crear_producto(self, nombre, cantidad, p_unitario, ubicacion):
         if cantidad < 0:
-            print("Error: La cantidad debe ser mayor a 0")
+            alertas("La cantidad debe ser mayo a 0", "rojo")
             return
         if p_unitario < 0:
-            print("Error: El precio unitario debe ser mayor a 0")
+            alertas("El precio unitario debe ser mayor a 0", "rojo")
             return
         self.productos.append(Producto(nombre, cantidad, p_unitario, ubicacion))
         self.crear_informe()
 
     def agregar_stock(self, nombre, cantidad, ubicacion):
         if cantidad < 0:
-            print("Error: La cantidad debe ser mayor a 0")
+            alertas("El cantidad debe ser mayor a 0", "rojo")
             return
         producto = self.buscar_producto(nombre, ubicacion)
         if producto:
             producto.cantidad += cantidad
         else:
-            print(
-                f"Error en agregar: El producto: {nombre} no existe en la ubicación: {ubicacion}"
+            alertas(
+                f"El producto: {nombre} no existe en la ubicación: {ubicacion}", "rojo"
             )
 
-        # self.crear_informe()
+        self.crear_informe()
 
     def vender_producto(self, nombre, cantidad, ubicacion):
         if cantidad < 0:
-            print("Error: La cantidad debe ser mayor a 0")
+            alertas("El cantidad debe ser mayor a 0", "rojo")
             return
         producto = self.buscar_producto(nombre, ubicacion)
         if producto:
             if producto.cantidad >= cantidad:
                 producto.cantidad -= cantidad
             else:
-                print(
-                    f"Error: No hay suficientes existencias de: {nombre} en {ubicacion}"
+                alertas(
+                    f"Error: No hay suficientes existencias de: {nombre} en {ubicacion}",
+                    "rojo",
                 )
         else:
-            print(
-                f"Error en agregar: El producto {nombre} no existe en la ubicación {ubicacion}"
+            alertas(
+                f"El producto: {nombre} no existe en la ubicación: {ubicacion}", "rojo"
             )
 
-        # self.crear_informe()
+        self.crear_informe()
 
     def crear_informe(self):
-        if len(self.productos) == 0:
-            print("Primero agregue el archivo .inv")
-            return
-
         with open("informe.txt", "w", encoding="UTF-8") as archivo:
             archivo.write(
                 "╔══════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗\n"
@@ -154,23 +176,18 @@ def leer_inicio(inventario, url_archivo):
     with open(url_archivo, "r", encoding="UTF-8") as archivo:
         lineas = archivo.readlines()
         for linea in lineas:
-            if linea.split(" ")[0] != "crear_producto":
-                print("Error de comando")
-                break
+            if linea == "" or linea == "\n" or linea.split(" ")[0] != "crear_producto":
+                continue
             texto_datos = linea.split(" ")[1]
             inventario.crear_producto(
-                texto_datos.split(";")[0],
-                int(texto_datos.split(";")[1]),
-                float(texto_datos.split(";")[2]),
+                texto_datos.split(";")[0].strip(),
+                int(texto_datos.split(";")[1].strip()),
+                float(texto_datos.split(";")[2].strip()),
                 texto_datos.split(";")[3].strip(),
             )
 
 
 def leer_movimientos(inventario, url_archivo):
-    if len(inventario.productos) == 0:
-        print("Primero agregue el archivo .inv")
-        return
-
     with open(url_archivo, "r", encoding="UTF-8") as archivo:
         lineas = archivo.readlines()
         for linea in lineas:
@@ -179,14 +196,14 @@ def leer_movimientos(inventario, url_archivo):
             texto_datos = linea.split(" ")[1]
             if linea.split(" ")[0] == "agregar_stock":
                 inventario.agregar_stock(
-                    texto_datos.split(";")[0],
-                    int(texto_datos.split(";")[1]),
+                    texto_datos.split(";")[0].strip(),
+                    int(texto_datos.split(";")[1].strip()),
                     texto_datos.split(";")[2].strip(),
                 )
             elif linea.split(" ")[0] == "vender_producto":
                 inventario.vender_producto(
-                    texto_datos.split(";")[0],
-                    int(texto_datos.split(";")[1]),
+                    texto_datos.split(";")[0].strip(),
+                    int(texto_datos.split(";")[1].strip()),
                     texto_datos.split(";")[2].strip(),
                 )
 
