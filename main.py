@@ -1,5 +1,6 @@
 from tkinter import filedialog
 
+
 def menuIncial():
     print()
     print(" ╔════════════════════════════════════════════════════════════════════════╗")
@@ -20,13 +21,17 @@ def menuIncial():
 
 def menuOpciones(opcion, inventario):
     if opcion == "1":
-        url_temporal,validacion = pedir_archivos("Seleccione el archivo de inicio","Archivo de inicio", "*.inv")
+        url_temporal, validacion = pedir_archivos(
+            "Seleccione el archivo de inicio", "Archivo de inicio", "*.inv"
+        )
         if validacion:
             leer_inicio(inventario, url_temporal)
         else:
             print("Selecciones un archivo")
     elif opcion == "2":
-        url_temporal,validacion = pedir_archivos("Seleccione el archivo de movimientos","Archivo de movimientos", "*.mov")
+        url_temporal, validacion = pedir_archivos(
+            "Seleccione el archivo de movimientos", "Archivo de movimientos", "*.mov"
+        )
         if validacion:
             leer_movimientos(inventario, url_temporal)
         else:
@@ -46,35 +51,114 @@ class Producto:
         self.p_unitario = p_unitario
         self.ubicacion = ubicacion
 
+
 class ControlInventario:
     def __init__(self):
         self.productos = []
 
-    def agregar_producto(self, nombre, cantidad, p_unitario, ubicacion):
-        pass
-    
+    def buscar_producto(self, nombre, ubicacion):
+        for producto in self.productos:
+            if producto.nombre == nombre and producto.ubicacion == ubicacion:
+                return producto
+        return None
+
+    def crear_producto(self, nombre, cantidad, p_unitario, ubicacion):
+        if cantidad < 0:
+            print("Error: La cantidad debe ser mayor a 0")
+            return
+        if p_unitario < 0:
+            print("Error: El precio unitario debe ser mayor a 0")
+            return
+        self.productos.append(Producto(nombre, cantidad, p_unitario, ubicacion))
+        self.crear_informe()
+
     def agregar_stock(self, nombre, cantidad, ubicacion):
-        pass
-    
+        if cantidad < 0:
+            print("Error: La cantidad debe ser mayor a 0")
+            return
+        producto = self.buscar_producto(nombre, ubicacion)
+        if producto:
+            producto.cantidad += cantidad
+        else:
+            print(
+                f"Error en agregar: El producto: {nombre} no existe en la ubicación: {ubicacion}"
+            )
+
+        # self.crear_informe()
+
     def vender_producto(self, nombre, cantidad, ubicacion):
-        pass
+        if cantidad < 0:
+            print("Error: La cantidad debe ser mayor a 0")
+            return
+        producto = self.buscar_producto(nombre, ubicacion)
+        if producto:
+            if producto.cantidad >= cantidad:
+                producto.cantidad -= cantidad
+            else:
+                print(
+                    f"Error: No hay suficientes existencias de: {nombre} en {ubicacion}"
+                )
+        else:
+            print(
+                f"Error en agregar: El producto {nombre} no existe en la ubicación {ubicacion}"
+            )
+
+        # self.crear_informe()
 
     def crear_informe(self):
-        pass
+        if len(self.productos) == 0:
+            print("Primero agregue el archivo .inv")
+            return
 
-def pedir_archivos(titulo,mensaje,extension):
+        with open("informe.txt", "w", encoding="UTF-8") as archivo:
+            archivo.write(
+                "╔══════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗\n"
+            )
+            archivo.write(
+                "║                                                INFORME DE INVENTARIO                                             ║\n"
+            )
+            # archivo.write("Producto\tCantidad\tPrecio Unitario\tUbicacion\n")
+            archivo.write(
+                "╠════════════════════════════════╦════════════════╦═════════════════════╦═════════════════╦════════════════════════╣\n"
+            )
+            archivo.write(
+                "║       NOMBRE DEL PRODUCTO      ║    CANTIDAD    ║   PRECIO UNITARIO   ║   VALOR TOTAL   ║        UBICACIÓN       ║\n"
+            )
+            archivo.write(
+                "╠════════════════════════════════╬════════════════╬═════════════════════╬═════════════════╬════════════════════════╣\n"
+            )
+            for dato in self.productos:
+                archivo.write("║")
+                archivo.write(" %-31s" % dato.nombre)
+                archivo.write("║")
+                archivo.write(" %-15s" % dato.cantidad)
+                archivo.write("║")
+                archivo.write(" %-20s" % dato.p_unitario)
+                archivo.write("║")
+                archivo.write(" %-16s" % (dato.cantidad * dato.p_unitario))
+                archivo.write("║")
+                archivo.write(" %-23s" % dato.ubicacion)
+                archivo.write("║\n")
+            archivo.write(
+                "╚════════════════════════════════╩════════════════╩═════════════════════╩═════════════════╩════════════════════════╝"
+            )
+            archivo.write("\n")
+
+
+def pedir_archivos(titulo, mensaje, extension):
     archivo = filedialog.askopenfilename(title=titulo, filetypes=[(mensaje, extension)])
-    return (archivo,  archivo != "")
+    return (archivo, archivo != "")
+
 
 def leer_inicio(inventario, url_archivo):
-    with open(url_archivo, "r",encoding="UTF-8") as archivo:
+    with open(url_archivo, "r", encoding="UTF-8") as archivo:
         lineas = archivo.readlines()
         for linea in lineas:
             if linea.split(" ")[0] != "crear_producto":
                 print("Error de comando")
                 break
             texto_datos = linea.split(" ")[1]
-            inventario.agregar_producto(
+            inventario.crear_producto(
                 texto_datos.split(";")[0],
                 int(texto_datos.split(";")[1]),
                 float(texto_datos.split(";")[2]),
@@ -83,14 +167,14 @@ def leer_inicio(inventario, url_archivo):
 
 
 def leer_movimientos(inventario, url_archivo):
-    if(len(inventario.productos)==0):
+    if len(inventario.productos) == 0:
         print("Primero agregue el archivo .inv")
         return
-    
+
     with open(url_archivo, "r", encoding="UTF-8") as archivo:
         lineas = archivo.readlines()
         for linea in lineas:
-            if(linea == "" or linea == "\n"):
+            if linea == "" or linea == "\n":
                 continue
             texto_datos = linea.split(" ")[1]
             if linea.split(" ")[0] == "agregar_stock":
