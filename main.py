@@ -22,6 +22,7 @@ def menuIncial():
 
 
 def menuOpciones(opcion, inventario):
+    # Cargar inventario incial
     if opcion == "1":
         url_temporal, validacion = pedir_archivos(
             "Seleccione el archivo de inicio", "Archivo de inicio", "*.inv"
@@ -31,7 +32,7 @@ def menuOpciones(opcion, inventario):
             leer_inicio(inventario, url_temporal)
         else:
             alertas("Seleccione el archivo de inicio", "rojo")
-
+    # Cargar instrucciones de movimientos
     elif opcion == "2":
         if len(inventario.productos) == 0:
             alertas("Primero agregue el archivo .inv", "rojo")
@@ -42,15 +43,18 @@ def menuOpciones(opcion, inventario):
         if validacion:
             alertas("Archivo cargado", "verde")
             leer_movimientos(inventario, url_temporal)
+            inventario.crear_informe()
             alertas("Datos Actualizados", "verde")
         else:
             alertas("Selecciones un archivo", "rojo")
+    # Crear Informe de Inventario
     elif opcion == "3":
         if len(inventario.productos) == 0:
             alertas("Primero agregue el archivo .inv", "rojo")
             return
         inventario.crear_informe()
-        alertas("Informe creado", "verde")
+        alertas("Informe actualizado", "verde")
+    # Cerre de Sesión
     elif opcion == "4":
         alertas("Cierre de Sesión", "verde")
     else:
@@ -73,8 +77,11 @@ class Producto:
     def __init__(self, nombre, cantidad, p_unitario, ubicacion):
         self.nombre = nombre
         self.cantidad = cantidad
-        self.p_unitario = p_unitario
+        self.p_unitario = round(p_unitario, 2)
         self.ubicacion = ubicacion
+
+    def calcular_total(self):
+        return round(self.cantidad * self.p_unitario, 2)
 
 
 class ControlInventario:
@@ -96,24 +103,24 @@ class ControlInventario:
             return
         self.productos.append(Producto(nombre, cantidad, p_unitario, ubicacion))
         self.crear_informe()
+        alertas("Informe actualizado", "verde")
 
     def agregar_stock(self, nombre, cantidad, ubicacion):
         if cantidad < 0:
-            alertas("El cantidad debe ser mayor a 0", "rojo")
+            alertas("[Agregando] El cantidad debe ser mayor a 0", "rojo")
             return
         producto = self.buscar_producto(nombre, ubicacion)
         if producto:
             producto.cantidad += cantidad
         else:
             alertas(
-                f"El producto: {nombre} no existe en la ubicación: {ubicacion}", "rojo"
+                f"[Agregando] El producto: {nombre} no existe en la ubicación: {ubicacion}",
+                "rojo",
             )
-
-        self.crear_informe()
 
     def vender_producto(self, nombre, cantidad, ubicacion):
         if cantidad < 0:
-            alertas("El cantidad debe ser mayor a 0", "rojo")
+            alertas("[Vendiendo] El cantidad debe ser mayor a 0", "rojo")
             return
         producto = self.buscar_producto(nombre, ubicacion)
         if producto:
@@ -121,15 +128,14 @@ class ControlInventario:
                 producto.cantidad -= cantidad
             else:
                 alertas(
-                    f"Error: No hay suficientes existencias de: {nombre} en {ubicacion}",
+                    f"[Vendiendo] No hay suficientes existencias de: {nombre} en {ubicacion}",
                     "rojo",
                 )
         else:
             alertas(
-                f"El producto: {nombre} no existe en la ubicación: {ubicacion}", "rojo"
+                f"[Vendiendo] El producto: {nombre} no existe en la ubicación: {ubicacion}",
+                "rojo",
             )
-
-        self.crear_informe()
 
     def crear_informe(self):
         with open("informe.txt", "w", encoding="UTF-8") as archivo:
@@ -157,7 +163,7 @@ class ControlInventario:
                 archivo.write("║")
                 archivo.write(" %-20s" % dato.p_unitario)
                 archivo.write("║")
-                archivo.write(" %-16s" % (dato.cantidad * dato.p_unitario))
+                archivo.write(" %-16s" % dato.calcular_total())
                 archivo.write("║")
                 archivo.write(" %-23s" % dato.ubicacion)
                 archivo.write("║\n")
