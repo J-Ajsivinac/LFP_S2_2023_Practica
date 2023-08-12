@@ -30,6 +30,7 @@ def menuOpciones(opcion, inventario):
         if validacion:
             alertas("Archivo cargado", "verde")
             leer_inicio(inventario, url_temporal)
+            alertas("Informe actualizado", "verde")
         else:
             alertas("Seleccione el archivo de inicio", "rojo")
     # Cargar instrucciones de movimientos
@@ -46,7 +47,7 @@ def menuOpciones(opcion, inventario):
             inventario.crear_informe()
             alertas("Datos Actualizados", "verde")
         else:
-            alertas("Selecciones un archivo", "rojo")
+            alertas("Seleccione un archivo", "rojo")
     # Crear Informe de Inventario
     elif opcion == "3":
         if len(inventario.productos) == 0:
@@ -103,7 +104,6 @@ class ControlInventario:
             return
         self.productos.append(Producto(nombre, cantidad, p_unitario, ubicacion))
         self.crear_informe()
-        alertas("Informe actualizado", "verde")
 
     def agregar_stock(self, nombre, cantidad, ubicacion):
         if cantidad < 0:
@@ -140,20 +140,20 @@ class ControlInventario:
     def crear_informe(self):
         with open("informe.txt", "w", encoding="UTF-8") as archivo:
             archivo.write(
-                "╔══════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗\n"
+                "╔══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗\n"
             )
             archivo.write(
-                "║                                                INFORME DE INVENTARIO                                             ║\n"
+                "║                                                  INFORME DE INVENTARIO                                               ║\n"
             )
             # archivo.write("Producto\tCantidad\tPrecio Unitario\tUbicacion\n")
             archivo.write(
-                "╠════════════════════════════════╦════════════════╦═════════════════════╦═════════════════╦════════════════════════╣\n"
+                "╠════════════════════════════════╦════════════════╦═════════════════════╦═════════════════════╦════════════════════════╣\n"
             )
             archivo.write(
-                "║       NOMBRE DEL PRODUCTO      ║    CANTIDAD    ║   PRECIO UNITARIO   ║   VALOR TOTAL   ║        UBICACIÓN       ║\n"
+                "║       NOMBRE DEL PRODUCTO      ║    CANTIDAD    ║   PRECIO UNITARIO   ║     VALOR TOTAL     ║        UBICACIÓN       ║\n"
             )
             archivo.write(
-                "╠════════════════════════════════╬════════════════╬═════════════════════╬═════════════════╬════════════════════════╣\n"
+                "╠════════════════════════════════╬════════════════╬═════════════════════╬═════════════════════╬════════════════════════╣\n"
             )
             for dato in self.productos:
                 archivo.write("║")
@@ -161,14 +161,14 @@ class ControlInventario:
                 archivo.write("║")
                 archivo.write(" %-15s" % dato.cantidad)
                 archivo.write("║")
-                archivo.write(" %-20s" % dato.p_unitario)
+                archivo.write(" %-20s" % f"${dato.p_unitario}")
                 archivo.write("║")
-                archivo.write(" %-16s" % dato.calcular_total())
+                archivo.write(" %-20s" % f"${dato.calcular_total()}")
                 archivo.write("║")
                 archivo.write(" %-23s" % dato.ubicacion)
                 archivo.write("║\n")
             archivo.write(
-                "╚════════════════════════════════╩════════════════╩═════════════════════╩═════════════════╩════════════════════════╝"
+                "╚════════════════════════════════╩════════════════╩═════════════════════╩═════════════════════╩════════════════════════╝"
             )
             archivo.write("\n")
 
