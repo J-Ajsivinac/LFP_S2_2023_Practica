@@ -24,15 +24,19 @@ def menuIncial():
 def menuOpciones(opcion, inventario):
     # Cargar inventario incial
     if opcion == "1":
+        url_temporal = ""
+        validacion = False
         url_temporal, validacion = pedir_archivos(
             "Seleccione el archivo de inicio", "Archivo de inicio", "*.inv"
         )
         if validacion:
             alertas("Archivo cargado", "verde")
             leer_inicio(inventario, url_temporal)
+            inventario.crear_informe()
             alertas("Informe actualizado", "verde")
         else:
             alertas("Seleccione el archivo de inicio", "rojo")
+            menuOpciones("1", inventario)
     # Cargar instrucciones de movimientos
     elif opcion == "2":
         if len(inventario.productos) == 0:
@@ -48,6 +52,7 @@ def menuOpciones(opcion, inventario):
             alertas("Datos Actualizados", "verde")
         else:
             alertas("Seleccione un archivo", "rojo")
+            menuOpciones("2", inventario)
     # Crear Informe de Inventario
     elif opcion == "3":
         if len(inventario.productos) == 0:
@@ -103,7 +108,6 @@ class ControlInventario:
             alertas("El precio unitario debe ser mayor a 0", "rojo")
             return
         self.productos.append(Producto(nombre, cantidad, p_unitario, ubicacion))
-        self.crear_informe()
 
     def agregar_stock(self, nombre, cantidad, ubicacion):
         if cantidad < 0:
